@@ -1,0 +1,12 @@
+Flask
+opencv-python
+numpy
+Pillow
+timm
+torch
+torchvision
+werkzeug
+fastapi
+uvicorn
+pydantic
+python-multipart

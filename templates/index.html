@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepFake Detector</title>
+    <style>
+        :root {
+            --bg-color: #f8f7f2; /* Soft off-white */
+            --primary-color: #2c5e4c; /* Calming dark green */
+            --secondary-color: #e4e2d7; /* Light neutral */
+            --text-color: #333333;
+            --accent-color: #d4a373; /* Subtle earthy accent */
+            --danger-color: #c0392b;
+            --success-color: #27ae60;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+            overflow: hidden;
+        }
+        
+        /* --- Sections --- */
+        #upload-section, #scanning-section, #result-section {
+            display: none; /* Initially hidden */
+        }
+        #upload-section.active, #scanning-section.active, #result-section.active {
+            display: block;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        h2 {
+           font-size: 1.5rem;
+           margin-top: 1rem;
+           margin-bottom: 1rem;
+        }
+        p {
+            color: #666;
+            margin-top: 0;
+            margin-bottom: 2rem;
+        }
+
+        /* --- Upload Buttons --- */
+        .upload-options {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .upload-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .upload-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(44, 94, 76, 0.2);
+        }
+        .upload-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* --- Scanning Section --- */
+        .scanner-box {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            margin: 2rem auto;
+            max-width: 400px;
+            border: 2px solid var(--secondary-color);
+        }
+        #scanning-image {
+            width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: contain;
+            display: block;
+        }
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            animation: scan 2.5s infinite linear;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        /* --- Result Section --- */
+        #results-container {
+            text-align: left;
+        }
+        .result-card {
+            border-top: 2px solid var(--secondary-color);
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .result-card:first-child {
+            border-top: none;
+            padding-top: 0;
+            margin-top: 0;
+        }
+
+        .result-verdict {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .verdict-fake { color: var(--danger-color); }
+        .verdict-real { color: var(--success-color); }
+        
+        .result-scores {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .score-box {
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: 12px;
+            width: 150px;
+            text-align: center;
+        }
+        .score-box h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+            color: #555;
+        }
+        .score-box p {
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .result-images {
+            display: flex;
+            justify-content: space-around;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        .image-container {
+            width: 100%;
+            max-width: 300px;
+        }
+        .image-container h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        .image-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid var(--secondary-color);
+        }
+        
+        .explanation {
+            background-color: var(--secondary-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            text-align: left;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .reset-btn {
+            background-color: var(--accent-color);
+            color: white;
+            margin-top: 2rem;
+        }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Section 1: Upload Options -->
+        <div id="upload-section" class="active">
+            <h1>DeepFake Detector</h1>
+            <p>Select the type of analysis you want to perform.</p>
+            <div class="upload-options">
+                <button type="button" class="upload-btn" onclick="triggerFileUpload('image')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                    Deepfake Image
+                </button>
+                <button type="button" class="upload-btn" onclick="triggerFileUpload('document')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                    Document Forgery
+                </button>
+            </div>
+            <input type="file" id="file-input" class="hidden">
+        </div>
+
+        <!-- Section 2: Scanning Animation -->
+        <div id="scanning-section" class="hidden">
+            <h2>Analyzing...</h2>
+            <p>Please wait while we process your file.</p>
+            <div class="scanner-box">
+                <img id="scanning-image" src="" alt="Image being scanned">
+                <div class="scan-line"></div>
+            </div>
+        </div>
+
+        <!-- Section 3: Results Display -->
+        <div id="result-section" class="hidden">
+            <div id="results-container">
+                <!-- Dynamic results will be injected here -->
+            </div>
+            <div class="text-center">
+                 <button type="button" class="upload-btn reset-btn" onclick="resetApp()">Analyze Another</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const uploadSection = document.getElementById('upload-section');
+    const scanningSection = document.getElementById('scanning-section');
+    const resultSection = document.getElementById('result-section');
+    const fileInput = document.getElementById('file-input');
+    const scanningImage = document.getElementById('scanning-image');
+    const resultsContainer = document.getElementById('results-container');
+    
+    let currentAnalysisType = '';
+
+    function triggerFileUpload(type) {
+        currentAnalysisType = type;
+        // Update accepted file types based on the button clicked
+        fileInput.accept = type === 'image' ? 'image/png, image/jpeg, image/jpg' : 'image/png, image/jpeg, image/jpg, application/pdf';
+        fileInput.click();
+    }
+
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            analyzeFile(file, currentAnalysisType);
+        }
+    });
+
+    function analyzeFile(file, type) {
+        // Show scanner and a preview if it's an image
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                scanningImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // For PDFs, show a generic placeholder or icon
+            scanningImage.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%232c5e4c' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z' /%3E%3C/svg%3E";
+        }
+        
+        uploadSection.classList.remove('active');
+        scanningSection.classList.add('active');
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('analysis_type', type);
+
+        fetch('/analyze', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+                resetApp();
+                return;
+            }
+            displayResults(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An unexpected error occurred. Please check the console.');
+            resetApp();
+        });
+    }
+
+    function displayResults(data) {
+        scanningSection.classList.remove('active');
+        resultsContainer.innerHTML = ''; // Clear previous results
+
+        if (data.analysis_type === 'pdf') {
+             const title = document.createElement('h1');
+             title.textContent = `PDF Analysis Report: ${data.original_filename}`;
+             resultsContainer.appendChild(title);
+             data.results.forEach(pageResult => {
+                 resultsContainer.appendChild(createResultCard(pageResult, `Page ${pageResult.page_number}`));
+             });
+        } else {
+            resultsContainer.appendChild(createResultCard(data));
+        }
+        
+        resultSection.classList.add('active');
+    }
+
+    function createResultCard(data, title = null) {
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        
+        const isFake = data.verdict.includes('DeepFake') || data.verdict.includes('Forgery');
+        const verdictClass = isFake ? 'verdict-fake' : 'verdict-real';
+
+        let scoresHtml = '';
+        let imagesHtml = '';
+
+        // Handle scores based on analysis type
+        if (data.analysis_type === 'image' || (data.real_score && data.fake_score)) {
+            scoresHtml = `
+                <div class="score-box">
+                    <h3>Authentic Score</h3>
+                    <p style="color: var(--success-color);">${data.real_score}%</p>
+                </div>
+                <div class="score-box">
+                    <h3>DeepFake Score</h3>
+                    <p style="color: var(--danger-color);">${data.fake_score}%</p>
+                </div>`;
+        } else { // Document or PDF page
+            scoresHtml = `
+                <div class="score-box">
+                    <h3>Forgery Score</h3>
+                    <p style="color: var(--danger-color);">${data.forgery_score}%</p>
+                </div>`;
+        }
+
+        // Handle images
+        if (data.original_image_url && data.analyzed_image_url) {
+            imagesHtml = `
+                <div class="image-container">
+                    <h4>Original</h4>
+                    <img src="${data.original_image_url}" alt="Original">
+                </div>
+                <div class="image-container">
+                    <h4>Analyzed</h4>
+                    <img src="${data.analyzed_image_url}" alt="Analyzed">
+                </div>
+            `;
+        }
+
+        card.innerHTML = `
+            ${title ? `<h2>${title}</h2>` : ''}
+            <h2 class="result-verdict ${verdictClass}">${data.verdict}</h2>
+            <div class="result-scores">${scoresHtml}</div>
+            ${data.explanation ? `<p class="explanation">${data.explanation}</p>` : ''}
+            <div class="result-images">${imagesHtml}</div>
+        `;
+        return card;
+    }
+
+    function resetApp() {
+        resultSection.classList.remove('active');
+        scanningSection.classList.remove('active');
+        uploadSection.classList.add('active'); // This is the corrected line
+        fileInput.value = ''; // Reset file input to allow re-uploading the same file
+        resultsContainer.innerHTML = '';
+    }
+
+    // Initialize the app view
+    document.addEventListener('DOMContentLoaded', resetApp);
+</script>
+
+</body>
+</html>
+

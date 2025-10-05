@@ -168,3 +168,4 @@ static/processed/
 # Secrets
 secrets.json
 config.json
+venv/
